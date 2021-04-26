@@ -13,13 +13,41 @@
     <body> 
         <div id="sidedrawer" class="mui--no-user-select">
             <div id="sidedrawer-brand" class="mui--appbar-line-height">
-                <span class="mui--text-title">Brand.io</span>
+                <span class="mui--text-title">ЗАМЕТКИ</span>
             </div>
             <div class="mui-divider"></div>
             
             <ul class="notes-list">
                 <li class="add note-href">
-                    <strong><a href="#">Новая заметка</a></strong>
+                    <strong><a href="#">
+                        <!-- Новая заметка -->
+                        <button class="add-button mui-btn mui-btn--fab mui-btn--primary ">+</button>
+                        <button class="delete-button mui-btn mui-btn--fab mui-btn--primary ">
+                        
+                            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                x="0px" y="0px" width="20px" height="30px" viewBox="0 0 32 32" enable-background="new 0 0 32 32"
+                                xml:space="preserve">
+                                <g id="trash">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" fill="#333333" d="M29.98,6.819c-0.096-1.57-1.387-2.816-2.98-2.816h-3v-1V3.001
+                        		c0-1.657-1.344-3-3-3H11c-1.657,0-3,1.343-3,3v0.001v1H5c-1.595,0-2.885,1.246-2.981,2.816H2v1.183v1c0,1.104,0.896,2,2,2l0,0v17
+                        		c0,2.209,1.791,4,4,4h16c2.209,0,4-1.791,4-4v-17l0,0c1.104,0,2-0.896,2-2v-1V6.819H29.98z M10,3.002c0-0.553,0.447-1,1-1h10
+                        		c0.553,0,1,0.447,1,1v1H10V3.002z M26,28.002c0,1.102-0.898,2-2,2H8c-1.103,0-2-0.898-2-2v-17h20V28.002z M28,8.001v1H4v-1V7.002
+                        		c0-0.553,0.447-1,1-1h22c0.553,0,1,0.447,1,1V8.001z" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd" fill="#333333" d="M9,28.006h2c0.553,0,1-0.447,1-1v-13c0-0.553-0.447-1-1-1H9
+                        		c-0.553,0-1,0.447-1,1v13C8,27.559,8.447,28.006,9,28.006z M9,14.005h2v13H9V14.005z" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd" fill="#333333" d="M15,28.006h2c0.553,0,1-0.447,1-1v-13c0-0.553-0.447-1-1-1h-2
+                        		c-0.553,0-1,0.447-1,1v13C14,27.559,14.447,28.006,15,28.006z M15,14.005h2v13h-2V14.005z" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd" fill="#333333" d="M21,28.006h2c0.553,0,1-0.447,1-1v-13c0-0.553-0.447-1-1-1h-2
+                        		c-0.553,0-1,0.447-1,1v13C20,27.559,20.447,28.006,21,28.006z M21,14.005h2v13h-2V14.005z" />
+                                </g>
+                            </svg>
+                        
+                        
+                        </button>
+                        <button class="check-all-button mui-btn mui-btn--fab mui-btn--primary ">✓</button>
+
+                    </a></strong>
                 </li>
                 <!-- <li class="select-note note-href" id="create-note">
                     <strong><a href="#">заметка</a></strong>
@@ -40,26 +68,15 @@
             <div class="mui--appbar-height"></div>
             <div class="note-container mui-container-fluid">
                 <br>
-                <h1>Brand.io</h1>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris sollicitudin volutpat molestie. Nullam id
-                    tempor nulla. Aenean sit amet urna et elit pharetra consequat. Aliquam fringilla tortor vitae lectus
-                    tempor, tempor bibendum nunc elementum. Etiam ultrices tristique diam, vitae sodales metus bibendum id.
-                    Suspendisse blandit ligula eu fringilla pretium. Mauris dictum gravida tortor eu lacinia. Donec purus
-                    purus, ornare sit amet consectetur sed, dictum sit amet ex. Vivamus sit amet imperdiet tellus. Quisque
-                    ultrices risus a massa laoreet, vitae tempus sem congue. Maecenas nec eros ut lectus vehicula rutrum.
-                    Donec consequat tincidunt arcu non faucibus. Duis elementum, ante venenatis lacinia cursus, turpis massa
-                    congue magna, sed dapibus felis nibh sed tellus. Nam consectetur non nibh vitae sodales. Pellentesque
-                    malesuada dolor nec mi volutpat, eget vehicula eros ultrices.</p>
-                <p>Aenean vehicula tortor a tellus porttitor, id elementum est tincidunt. Etiam varius odio tortor. Praesent
-                    vel pulvinar sapien. Praesent ac sodales sem. Phasellus id ultrices massa. Sed id erat sit amet magna
-                    accumsan vulputate eu at quam. Etiam feugiat semper imperdiet. Sed a sem vitae massa condimentum
-                    vestibulum. In vehicula, quam vel aliquet aliquam, enim elit placerat libero, at pretium nisi lorem in
-                    ex. Vestibulum lorem augue, semper a efficitur in, dictum vitae libero. Donec velit est, sollicitudin a
-                    volutpat quis, iaculis sit amet metus. Nulla at ante nec dolor euismod mattis cursus eu nisl.</p>
-                <p>Quisque interdum facilisis consectetur. Nam eu purus purus. Curabitur in ligula quam. Nam euismod ligula
-                    eu tellus pellentesque laoreet. Aliquam erat volutpat. Curabitur eu bibendum velit. Cum sociis natoque
-                    penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nunc efficitur lorem sit amet quam
-                    porta pharetra. Cras ultricies pellentesque eros sit amet semper.</p>
+                <h1>Заметки</h1>
+                <p>В этом веб-приложении можно создавать заметки, сохранять их, редактировать и удалять.</p>
+                <p>Такой невообразимый функционал стал возможен благодаря использованию JS, библиотек MUI и Underscore. Все это безобразие должно быть  
+                    собрано webpack'ом, 
+                    и когда-то может даже заиметь почти-что-бэкенд с использованием google firebase (но это не точно).
+                </p>
+                <p>Для сохранения заметки можно просто убрать фокус с поля ввода. Для удаления заметки отметьте ее галочкой, и нажмите на соответствующую кнопку.
+                    Пустая заметка удаляется!
+                </p>
             </div>
         </div>
         <footer id="footer">

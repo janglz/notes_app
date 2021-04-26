@@ -128,6 +128,23 @@
   * Sidedrawer CSS
   */
  
+ .time {
+    color: #8babbb;
+ }
+
+ .checkbox {
+   width: 20px;
+   display: block;
+   position: absolute;
+   transform: scale(1.5);
+   right: 20px;
+   opacity: 0;
+ }
+
+ .checkbox:checked {
+  opacity: 1;
+}
+
  #sidedrawer-brand {
    padding-left: 20px;
  }
@@ -153,11 +170,40 @@
  #sidedrawer strong:hover {
    background-color: #E0E0E0;
  }
+
+ #sidedrawer strong:hover .checkbox {
+  opacity: 0.8;
+ }
  
  #sidedrawer strong + ul > li {
    padding: 6px 0px;
  }
  
+ .mui-btn--fab {
+  display: inline-block;
+  /* position: absolute;
+  /* transform:scale(1.5); */
+  /* top: 20px; */
+  line-height: 20px;
+  font-size: 18px;
+  color: black;
+  width: 30px;
+  height: 30px;
+  background: white;
+  margin: 0px;
+ }
+
+ .add a {
+   display: flex;
+   justify-content: space-between;
+ }
+ .add a:hover {
+  text-decoration: none;
+}
+ 
+ .delete-button:hover #trash>path{
+  fill:#fff
+ }
  
  /**
   * Footer CSS
@@ -177,6 +223,20 @@
    background-color: #0289d11a;
  }
  
- .time {
-   color: #8babbb;
- }
+ .editable-note {
+  overflow:auto;
+  padding: 15px 0px;
+  font-size: 16px;
+  white-space: pre-line;
+  height: 65vh;
+}
+.editable-note:hover {
+  cursor:text;
+  margin-top: 15px;
+  padding-top: 0px;
+  background-color: #E0E0E0;
+}
+
+.form-text-input {
+  height: 65vh;
+}
