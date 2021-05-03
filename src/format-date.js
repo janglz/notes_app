@@ -1,5 +1,6 @@
 const formatDate = (date) => {
-    let diff = new Date() - date; // разница в миллисекундах
+    let newDate = new Date(date)
+    let diff = new Date() - newDate; // разница в миллисекундах
 
     if (diff < 1000) { // меньше 1 секунды
         return 'прямо сейчас';
@@ -18,7 +19,7 @@ const formatDate = (date) => {
 
     // отформатировать дату
     // добавить ведущие нули к единственной цифре дню/месяцу/часам/минутам
-    let d = date;
+    let d = newDate;
     d = [
         '0' + d.getDate(),
         '0' + (d.getMonth() + 1),

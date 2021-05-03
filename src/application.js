@@ -1,7 +1,7 @@
 import _ from 'underscore'
 import formatDate from './format-date'
 import trashBucketSvg from './trash-icon.js'
-import synchronization from './synchronization'
+import { submitAuthForm, signOut, initFirebase, synchronization, writeUserData } from './synchronization'
 
 class Note {
     constructor (text, id) {
@@ -9,6 +9,7 @@ class Note {
         this.text = text;
         this.creationTime = new Date();
         this.checked = false;
+        //this.getTime = getTime();
     }
 
     getTime () {
@@ -16,16 +17,17 @@ class Note {
     }
 }
 
-const renderNotesList = (state) => {                                    //<======ГЕНЕРАЦИЯ МЕНЮ
+const renderNotesList = (state, activeNote) => {                                    //<======ГЕНЕРАЦИЯ МЕНЮ
+    //if (state.activeNote === null) 
     let result = state.notes.reduce((acc, currentNote) => {
         const text = currentNote.text.slice(0, 16);
         const checkboxValue = currentNote.checked === true? 'checked' : ''
-        if (currentNote.id === state.activeNote.id){
+        if (currentNote === activeNote){
             return acc = `
             <li class="select-note note-href selected" id="${currentNote.id}">
                 <strong><a href="#${currentNote.id}">${text}
                 <input type="checkbox" class="checkbox" ${checkboxValue}>
-                <p class="time">${currentNote.getTime()}</p></a></strong>
+                <p class="time">${currentNote.getTime}</p></a></strong>
             </li>
             ` + acc
         }
@@ -34,7 +36,7 @@ const renderNotesList = (state) => {                                    //<=====
             <strong><a href="#${currentNote.id}">${text}
 
             <input type="checkbox" class="checkbox" ${checkboxValue}>
-            <p class="time">${currentNote.getTime()}</p></a></strong>
+            <p class="time">${currentNote.getTime}</p></a></strong>
         </li>` + acc
     }, '');
 
@@ -42,7 +44,7 @@ const renderNotesList = (state) => {                                    //<=====
         <button class="add-button mui-btn mui-btn--fab mui-btn--primary">+</button>
         <button class="delete-button mui-btn mui-btn--fab mui-btn--primary">${trashBucketSvg}</button>
         <button class="check-all-button mui-btn mui-btn--fab mui-btn--primary">✓</button>
-    </a></strong></li>` + result;
+    </a></strong></li>` + result + `<button class="logout-button mui-btn mui-btn--flat mui-btn--primary">выйти из аккаунта</button>`;
 }
 
 const renderForm = (state, currentNote) => { //<= ГЕНЕРАЦИЯ ФОРМЫ
@@ -65,59 +67,158 @@ const renderForm = (state, currentNote) => { //<= ГЕНЕРАЦИЯ ФОРМЫ
     submit.value = 'Save';
     form.appendChild(submit);
 
-    console.log('form generated:', form)
     return form;
 }
 
 const renderNote = (state, currentNote) => { //<= ГЕНЕРАЦИЯ ТЕКСТА ЗАМЕТКИ 
-    if (!currentNote) return ''
+    if (!currentNote) return `
+    <br>
+    <h1>Заметки</h1>
+    <p>В этом веб-приложении можно создавать заметки, сохранять их, редактировать и удалять.</p>
+    <p>Такой невообразимый функционал стал возможен благодаря использованию JS, библиотек MUI и Underscore. Аутентификация работает через Google Firebase.
+    </p>
+    <p>Для сохранения заметки можно просто убрать фокус с поля ввода. Для удаления заметки отметьте ее галочкой, и нажмите на соответствующую кнопку.
+    </p>
+    `
     return `<p class="editable-note">${currentNote.text}</p>
-    <p class="time">${currentNote.getTime()}</p>`
+    <p class="time">${currentNote.getTime}</p>`
+}
+
+const renderLoginPage = (state) => {
+    const modalEl = document.createElement('div');
+
+    modalEl.style.width = '400px';
+    modalEl.style.height = '300px';
+    modalEl.style.margin = '100px auto';
+    modalEl.style.padding = '20px';
+    modalEl.style.backgroundColor = '#fff';
+    
+    const welcomePhrase = state.user.registered? `введите свои данные` : `зарегистрируйтесь`;
+    const buttonPhrase = state.user.registered? `нет аккаунта` : `есть аккаунт`;
+    // show modal
+    modalEl.innerHTML = `
+    <form class="mui-form">
+        <legend class="">Пожалуйста, ${welcomePhrase}</legend>
+        <div class="mui-textfield mui-textfield--float-label">
+            <input type="email" id="email" class="email">
+            <label>email</label>
+        </div>
+        <div class="mui-textfield mui-textfield--float-label">
+            <input type="password" id="password" class="password">
+            <label>пароль</label>
+        </div>
+
+        <button type="submit" class="register mui-btn mui-btn--raised">Вперед!</button>
+        <button class="login mui-btn mui-btn--raised">У меня ${buttonPhrase}</button>
+    </form>`
+    //mui.overlay('on', modalEl);
+    return modalEl;
+}
+
+const renderError = (error) => {
+    const errorPanel = document.createElement('div');
+    errorPanel.classList.add('mui-panel');
+    errorPanel.style.backgroundColor = '#f17878';
+    errorPanel.innerHTML = `${error}`
+
+    return errorPanel;
 }
 
 const render = async (state, elem, components) => { //<= РЕНДЕР
+    console.log('rendering:', state)
     components.noteContainer.innerHTML = '';
-    const currentNote = _.find(state.notes, (note)=> note.id === state.activeNote.id);
-
-    console.log('rendering note', currentNote)
-    console.log(state)
+    let currentNote = state.activeNote;
+    // let currentNote = null;
+    // if(state.activeNote) {
+    //     currentNote = _.find(state.notes, (note)=> note.id === state.activeNote.id);
+    //     //state.activeNote = currentNote
+    // }
 
     switch (state.page) {
         case 'editing':
             components.noteContainer.appendChild(renderForm(state, currentNote));
+            initialize(state, components) 
             break;
         
         case 'reading':
-            components.noteContainer.innerHTML = await renderNote(state, state.activeNote); 
-            components.notesList.innerHTML = await renderNotesList(state)
+            //let currentNote = _.find(state.notes, (note)=> note.id === state.activeNote.id);
+            components.noteContainer.innerHTML = await renderNote(state, currentNote); 
+            components.notesList.innerHTML = await renderNotesList(state, currentNote)
+            initialize(state, components) 
             break;
 
         case 'login':
-            components.noteContainer.innerHTML = await renderLoginPage();
+            components.noteContainer.appendChild(renderLoginPage(state));
+            if (state.error) {
+                components.noteContainer.appendChild(renderError(state.error))
+            }
+            
+            //initialize(state, components) 
             break;
 
         default:
             break;
     }  
-    initialize(state, components) 
+    
+    
 }
 
 
-const initialize = (state, components) => {
+const initialize = async (state, components) => {
     console.log('initializing...')
-    // загрузка инфы с сервера и/или локал стоража
-    synchronization(state);
+    
+    // ограничение доступа
+    
+    if (!state.user.isAuth) {
+        state.page = 'login';
+        await render(state, null, components);
+        const submit = document.querySelector('.register');
+        if (!submit) {
+            
+            //render(state, null, components);
+        } else {
+            const form = document.querySelector('form');
+            form.addEventListener('submit', async (e)=>{
+                e.preventDefault();
+                await submitAuthForm(state, form, components, e);
+                initialize(state, components)
+                console.log('sub')
+                //render(state, null, components);
+                
+            });
+            document.querySelector('.login').addEventListener('click', ()=>{
+                state.user.registered = !state.user.registered;
+                synchronization(state, components);
+                initialize(state, components)
+                //render(state, null, components)
+            });
+        }
+        return
+    };
+
+    
+    console.log('initialized:',state)
 
     // создает новую заметку
-    document.querySelector('.add').addEventListener('click', (e)=>{  
-        e.preventDefault();
-        console.log('click');
-        const note = new Note('', _.uniqueId('note_'))
-        state.notes.push(note);
-        state.activeNote = note;
-        state.page = 'editing';
-        render(state, note, components);
-    })
+    const addNoteButton = document.querySelector('.add-button')
+    if (addNoteButton) {
+        addNoteButton.addEventListener('click', async(e) => {
+            e.preventDefault();
+            const generateId = (x = 0) =>{
+                let id = _.uniqueId(`note_${x}`);
+                state.notes.forEach(note=>{
+                    if(note.id === id) return id = generateId(x+1)
+                }, id)
+                return id;
+            }
+            const note = new Note('', generateId())
+            state.notes.push(note);
+            state.activeNote = note;
+            state.page = 'editing';
+            await synchronization(state, components)
+            render(state, note, components);
+        })
+    }
 
     const allNotes = document.querySelectorAll('.select-note');  
     allNotes.forEach((elem)=>{                                         
@@ -125,14 +226,12 @@ const initialize = (state, components) => {
         
         elem.addEventListener('click', (e)=> {      //<= выбор заметки для показа, добавляем в стейт актив
             e.preventDefault();
-            console.log('click on note')
             state.activeNote = _.find(state.notes, (note) => elem.id === note.id); // вроде работает ????
             state.page = 'reading';
             render(state, state.activeNote, components);
             
         })
         if (checkbox) {
-            console.log(checkbox)
             checkbox.addEventListener('click', (e)=>{ 
                 e.stopPropagation()
                 checkNote(state, checkbox, elem); 
@@ -141,21 +240,24 @@ const initialize = (state, components) => {
     })
 
     // удаляет выделенные заметки
-    document.querySelector('.delete-button').addEventListener('click', (e)=>{
+    document.querySelector('.delete-button').addEventListener('click', async (e)=>{
         e.stopPropagation();
         state.notes = _.filter(state.notes, (note) => note.checked === false); 
         state.page = 'reading'
-        closeForm(e, state, state.activeNote, '', components)
+        closeForm(state, state.activeNote, '', components)
+        await synchronization(state, components);
+        // writeUserData(state.user.id, state, components);
         render(state, null, components)
     })
 
     // ввыделяет все заметки
     document.querySelector('.check-all-button').addEventListener('click', (e)=>{
-        e.stopPropagation();
+        //e.stopPropagation();
+        state.checkedAll = !state.checkedAll;
         state.checkedAll ? 
         state.notes.map((note) => note.checked = false) :
         state.notes.map((note) => note.checked = true);
-        state.checkedAll = !state.checkedAll;
+        
         render(state, null, components)
     })
 
@@ -163,7 +265,6 @@ const initialize = (state, components) => {
     const edit = components.noteContainer.querySelectorAll('.editable-note')[0];
     if (edit) {
         edit.addEventListener('click', ()=>{        //<= редактирование, при рендере сгенерирует форму
-            console.log('click')
             state.page = 'editing';
             render(state, state.activeNote, components);
         })
@@ -172,14 +273,24 @@ const initialize = (state, components) => {
     const form = document.querySelector('form');
     if (form) {
         const input = document.querySelectorAll('.form-text-input')[0];
-        input.focus();
+        
         let currentNote = _.find(state.notes, (note) => note.id === state.activeNote.id);  //находит заметку в общем массиве по айди активной
-        if (!currentNote) { //если заметка уже была удалена, то по клику на нее создается новая
-            currentNote = new Note('', _.uniqueId('note_'));
-            state.activeNote = currentNote;
-            state.notes.push(currentNote)
+        if (!currentNote) { 
+            //===========
+            //надо сделать так, чтобы если нет заметки, рендерилось чтото иное
+            //===========
+            state.page = 'reading';
+            render(state, null, components);
+            return
+
+
+            //если заметка уже была удалена, то по клику на нее создается новая
+            // currentNote = new Note('', _.uniqueId('note_'));
+            // state.activeNote = currentNote;
+            // state.notes.push(currentNote)
         }
         
+        input.focus();
         input.addEventListener('keyup', (e) => {
             e.preventDefault();
             currentNote.text = input.value;
@@ -195,32 +306,44 @@ const initialize = (state, components) => {
         input.addEventListener('blur', (e) => {
             e.preventDefault();
             closeForm(state, currentNote, input.value, components)
+            state.page = 'reading'
+            //writeUserData(state.user.id, state, components) //ЭТО СТРОЧКА запускает цикл :/
+            synchronization(state, components)
             render(state, currentNote, components)
         })
   
     }
+
+    document.querySelector('.logout-button').addEventListener('click', ()=>signOut(state, components));
+    //render(state, null, components)
 }
 
 // Эта функция удалит заметку, если она пустая, и закроет форму
 
 const closeForm = (state, currentNote, value, components) => {
-    console.log('focus lost, input value:', value)
     state.page = 'reading';
     currentNote.text = value;
+    
     if (value === '') {
-        state.activeNote = null;
-        state.notes.splice(state.notes.indexOf(currentNote), 1);    
+        currentNote.text = 'Новая заметка...'
     }  
 }
 
 
-export default () => {
+const app = async () => {
 
     const state = {
+        user: {
+            id: '',
+            registered: false,
+            isAuth: false,
+        },
         notes: [],
         checkedAll: false,
         activeNote: null,
-        page: 'reading', //'editing', 'login'
+        page: 'login', //'editing', 'login', 'reading'
+        error: null,
+        //page: 'reading', //'editing', 'login', 'reading'
     }
 
     const components = {
@@ -228,6 +351,9 @@ export default () => {
         notesList: document.querySelector('.notes-list'),
         noteContainer: document.querySelector('.note-container'),
     }
+    
+    await initFirebase(state, components);
+    //state.activeNote = state.notes[state.notes.length-1]
     initialize(state, components);
 }
 
@@ -236,5 +362,6 @@ export default () => {
 const checkNote = (state, checkbox, elem) => {
     _.find(state.notes, (note) => note.id === elem.id).checked =
     (checkbox.checked ? true : false);
-    console.log(state)
 }
+
+export { app, render, initialize, Note, formatDate }

@@ -20,6 +20,8 @@
     "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
+    "firebase": "^8.4.2",
+    "lodash": "^4.17.21",
     "underscore": "^1.13.1"
   }
 }

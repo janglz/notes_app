@@ -240,3 +240,7 @@
 .form-text-input {
   height: 65vh;
 }
+
+.mui-form legend {
+  text-align: center;
+}
