@@ -136,6 +136,7 @@ const render = async (state, elem, components) => { //<= РЕНДЕР
 
     switch (state.page) {
         case 'editing':
+            components.notesList.innerHTML = renderNotesList(state, currentNote);
             components.noteContainer.appendChild(renderForm(state, currentNote));
             initialize(state, components) 
             break;
@@ -148,6 +149,7 @@ const render = async (state, elem, components) => { //<= РЕНДЕР
             break;
 
         case 'login':
+            components.notesList.innerHTML = '';
             components.noteContainer.appendChild(renderLoginPage(state));
             if (state.error) {
                 components.noteContainer.appendChild(renderError(state.error))
@@ -169,10 +171,11 @@ const initialize = async (state, components) => {
     
     // ограничение доступа
     
-    if (!state.user.isAuth) {
+    if (!state.user.isAuth || state.page === 'login') {
         state.page = 'login';
         await render(state, null, components);
         const submit = document.querySelector('.register');
+        // synchronization(state, components);
         if (!submit) {
             
             //render(state, null, components);
@@ -180,15 +183,15 @@ const initialize = async (state, components) => {
             const form = document.querySelector('form');
             form.addEventListener('submit', async (e)=>{
                 e.preventDefault();
+                console.log('sub')
                 await submitAuthForm(state, form, components, e);
                 initialize(state, components)
-                console.log('sub')
-                //render(state, null, components);
                 
             });
             document.querySelector('.login').addEventListener('click', ()=>{
                 state.user.registered = !state.user.registered;
-                synchronization(state, components);
+                console.log(state.user.registered)
+                //synchronization(state, components);
                 initialize(state, components)
                 //render(state, null, components)
             });
@@ -198,9 +201,10 @@ const initialize = async (state, components) => {
 
     
     console.log('initialized:',state)
-
+    
     // создает новую заметку
     const addNoteButton = document.querySelector('.add-button')
+
     if (addNoteButton) {
         addNoteButton.addEventListener('click', async(e) => {
             e.preventDefault();
@@ -226,7 +230,7 @@ const initialize = async (state, components) => {
         
         elem.addEventListener('click', (e)=> {      //<= выбор заметки для показа, добавляем в стейт актив
             e.preventDefault();
-            state.activeNote = _.find(state.notes, (note) => elem.id === note.id); // вроде работает ????
+            state.activeNote = _.find(state.notes, (note) => elem.id === note.id); // работает
             state.page = 'reading';
             render(state, state.activeNote, components);
             
@@ -246,7 +250,6 @@ const initialize = async (state, components) => {
         state.page = 'reading'
         closeForm(state, state.activeNote, '', components)
         await synchronization(state, components);
-        // writeUserData(state.user.id, state, components);
         render(state, null, components)
     })
 
@@ -273,54 +276,57 @@ const initialize = async (state, components) => {
     const form = document.querySelector('form');
     if (form) {
         const input = document.querySelectorAll('.form-text-input')[0];
-        
+        if (!state.activeNote) state.activeNote = _.last(state.notes)
         let currentNote = _.find(state.notes, (note) => note.id === state.activeNote.id);  //находит заметку в общем массиве по айди активной
+        //
         if (!currentNote) { 
             //===========
             //надо сделать так, чтобы если нет заметки, рендерилось чтото иное
             //===========
-            state.page = 'reading';
+            state.activeNote = null;
+            state.page = 'reading'
+            //closeForm(state, null, '')
             render(state, null, components);
+            //synchronization(state, components)
             return
-
-
-            //если заметка уже была удалена, то по клику на нее создается новая
-            // currentNote = new Note('', _.uniqueId('note_'));
-            // state.activeNote = currentNote;
-            // state.notes.push(currentNote)
         }
         
         input.focus();
-        input.addEventListener('keyup', (e) => {
-            e.preventDefault();
-            currentNote.text = input.value;
+        // input.addEventListener('keyup', (e) => {
+        //     e.preventDefault();
+        //     currentNote.text = input.value;
 
-            //чтобы реализовать этот функционал, потребуется еще одно состояние. Пока не хочется.
-            // if (input.value === '') {
-            //     state.notes.splice(state.notes.indexOf(currentNote), 1);
+        //     //чтобы реализовать этот функционал, потребуется еще одно состояние. Пока не хочется.
+        //     // if (input.value === '') {
+        //     //     state.notes.splice(state.notes.indexOf(currentNote), 1);
                 
-            // }
-            //render(state, currentNote, components) 
-        })
+        //     // }
+        //     //render(state, currentNote, components) 
+        // })
 
         input.addEventListener('blur', (e) => {
             e.preventDefault();
-            closeForm(state, currentNote, input.value, components)
+            currentNote.text = input.value;
+            closeForm(state, currentNote, input.value)
             state.page = 'reading'
             //writeUserData(state.user.id, state, components) //ЭТО СТРОЧКА запускает цикл :/
-            synchronization(state, components)
+            
             render(state, currentNote, components)
+            synchronization(state, components)
         })
   
     }
 
-    document.querySelector('.logout-button').addEventListener('click', ()=>signOut(state, components));
+    const logOutBtn = document.querySelector('.logout-button');
+    if (logOutBtn){
+        logOutBtn.addEventListener('click', ()=>signOut(state, components));
+    }
     //render(state, null, components)
 }
 
 // Эта функция удалит заметку, если она пустая, и закроет форму
 
-const closeForm = (state, currentNote, value, components) => {
+const closeForm = (state, currentNote, value) => {
     state.page = 'reading';
     currentNote.text = value;
     
@@ -354,7 +360,8 @@ const app = async () => {
     
     await initFirebase(state, components);
     //state.activeNote = state.notes[state.notes.length-1]
-    initialize(state, components);
+    //initialize(state, components);
+    //render(state, state.activeNote, components)
 }
 
 // выбор заметок (чекбокс)

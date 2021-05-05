@@ -3,11 +3,8 @@ import "firebase/auth";
 import "firebase/database";
 import { render, initialize, Note, formatDate } from "./application";
 import "lodash";
-import { object } from "underscore";
-// import functions from "../node_modules/firebase/firebase-functions";
-// import database from "../node_modules/firebase/firebase-database";
 
-let database;
+//let database;
 function getTime (note) {
     return formatDate(note.creationTime)
 }
@@ -20,17 +17,14 @@ const firebaseConfig = {
     storageBucket: "notes-app-6a955.appspot.com",
     messagingSenderId: "1052288609593",
     appId: "1:1052288609593:web:6a680242619f1038ab8ce8"
-  };
+};
 
 
 // инициализация бд
-const initFirebase = async (state, components) => {
-    // database = firebase.database();
+const initFirebase = (state, components) => {
     firebase.initializeApp(firebaseConfig);
-    //loadUserData(state.user.id, state, components)
-    getUserData(state.user.id,state, components)
     authStateListener(state, components);
-    //synchronization(state, components);
+    //initialize(state, components)
 }
 
 
@@ -40,29 +34,37 @@ function authStateListener(state, components) {
         if (user) {
             // User is signed in, see docs for a list of available properties
             // https://firebase.google.com/docs/reference/js/firebase.User
-            
-            //
-            
             state.user.isAuth = true;
-            state.user.registered = true;
             state.user.id = user.uid;
             state.page = 'editing'
-            //synchronization(state, components)
-            createUserData(user.uid, state, components);  //======================?????? мб перенести в регистрацию
+            //createUserData(user.uid, state, components);  //======================?????? Она вообще нужна?
             stateChangeListener(user.uid, state, components)
             initialize(state, components)
-            //render(state, null, components)
         } else {
             // User is signed out
             state.user.isAuth = false;
-            state.user.registered = false;
             state.page = 'login'
             initialize(state, components)
-            //render(state, null, components)
         }
     });
 }
 
+//СЛУШАТЕЛЬ ИЗМЕНЕНИЯ СОСТОЯНИЯ НА СЕРВЕРЕ
+function stateChangeListener(userId, state, components) {
+    var stateRef = firebase.database().ref('users/' + userId);
+    stateRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data.notes) {
+            state.notes = JSON.parse( JSON.stringify(data.notes));
+            state.notes.map(note=>{
+                return note.getTime = getTime(JSON.parse( JSON.stringify(note)))
+            })
+        state.activeNote = data.activeNote;
+        }
+        console.log('local state changed:', state)
+        //initialize(state, state.activeNote, components)
+    });
+}
 
 // логаут
 function signOut(state, components) {
@@ -71,6 +73,7 @@ function signOut(state, components) {
         state.user.isAuth = false;
         // state.user.registered = false;
         state.page = 'login';
+        //initialize(state, components)
         render(state, null, components)
     }).catch((error) => {
         state.error = error;
@@ -79,37 +82,27 @@ function signOut(state, components) {
 
 //сохранение состояния в бд
 const synchronization = (state, components) => {
-    //if (state.status != 'login') {
+    if (state.status != 'login') {
         try { 
             updateData(state.user.id, state, components)
-            //stateChangeListener(state.user.id, state, components)
             //initialize(state, components);
         } catch (err) {
             console.log(err)
         }
-    //}
+    }
 }
 
 function getUserData(userId, state, components) {
     const dbRef = firebase.database().ref('users/' + userId)
     dbRef.get().then((snapshot) => {
         const data = snapshot.val();
-        console.log('qq', data)
+        console.log('getUserData:', data)
         if (data) {
-            
-            //data.map(note=>note.getTime = getTime);
-            
-            
-            // data.map(note=>{
-            //     //console.log(note)
-            //     return note.getTime = getTime(JSON.parse( JSON.stringify(note)))
-            // })
-
             // ЭТО ХУЙНЯ НЕ РОБИТ .
-            state.activeNote = data.activeNote;
-            state.notes = _.unionBy(state.notes, data, 'id')
+            //state.activeNote = data.activeNote;
+            //state.notes = _.unionBy(state.notes, data, 'id')
             console.log('state get',state);
-            render(state, null, components)
+            //render(state, null, components)
         } else {
             console.log("No data available");
         }
@@ -119,82 +112,30 @@ function getUserData(userId, state, components) {
 }
 
 
-//const dbRef = firebase.database().ref('users/' + userId);
 //ЗАГРУЗКА СТЕЙСТА В БазуДанных
 function updateData(userId, state, components) {
-    const dbRef = firebase.database().ref('users/' + userId);
-    //const result = _.unionWith(dbRef, state, _.cloneDeep)
-    const result = _.assign(dbRef, state)
-    console.log('result of merge data', result)
+    //const dbRef = firebase.database().ref('users/' + userId);
     console.log('local state sending', state)
       
     firebase.database().ref('users/' + userId).update(state);
+}
 
+
+// //ЗАПИСЬ ПОЛЬЗОВАТЕЛЯ В БД
+// function createUserData(userId, state, components) {
+//     firebase.database().ref('users/' + userId).get().then((data)=>{
+//         firebase.database().ref().set({
+
+//             state: data.val()//.state
+
+//         }); // достаем данные если они уже есть
+//         console.log('get & set:', data.val())
+//     });
     
-}
-
-
-//ЗАПИСЬ ПОЛЬЗОВАТЕЛЯ В БД
-function createUserData(userId, state, components) {
-    // firebase.database().ref('users/' + userId).get().then((data)=>{
-    //     firebase.database().ref('users/' + userId).set({
-
-    //         state: data.val()//.state
-
-    //     }); // достаем данные если они уже есть
-    //     console.log('get & set:', data.val())
-    // });
-    
-    //console.log('create user:', userId);
-    //initialize(state, components)
-    //render(state, null, components)
-}
-
-
-//СЛУШАТЕЛЬ ИЗМЕНЕНИЯ СОСТОЯНИЯ НА СЕРВЕРЕ
-function stateChangeListener(userId, state, components) {
-    var stateRef = firebase.database().ref('users/' + userId);
-    stateRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        //const newState = JSON.parse(data)
-        console.log(typeof data,'get state', data);
-        //dataFromBD.state.notes.forEach((note)=>{
-        if (data.notes) {
-        //state.notes = _.unionBy(state.notes, data.notes, 'id')
-        // state.notes = _.unionWith(state.notes, data.notes, (localNote, BDNote)=>{
-        //     if (localNote.id === BDNote.id){
-
-        //     }
-        // })
-        // _.map(data.notes, (note)=>{
-        //     return new Note(note.text, note.id)
-        // })
-        //data.collection.doc(state.notes).set(JSON.parse( JSON.stringify(state)));
-            //state.notes = _.unionBy(state.notes, data, 'id')
-            state.notes = JSON.parse( JSON.stringify(data.notes));
-       
-            state.notes.map(note=>{
-            //console.log(note)
-            //return Object.create(JSON.parse( JSON.stringify(note)), Note)
-            return note.getTime = getTime(JSON.parse( JSON.stringify(note)))
-            })
-        //state.activeNote = data.activeNote;
-        }
-        
-        
-        // state.notes = _.unionWith(state.notes, data.notes, _.cloneDeep)
-        //initialize(state, components)
-        console.log('local state:', state)
-        
-    });
-
-}
-
-
-
-
-
-
+//     console.log('create user:', userId);
+//     initialize(state, components)
+//     //render(state, null, components)
+// }
 
 
 
@@ -207,6 +148,7 @@ const submitAuthForm = (state, form, components, event) => {
     } else {
         signUpWithEmailPassword(state, pass, components);
     }
+    //initialize(state, components)
 }
 
 // вход
@@ -216,12 +158,10 @@ function signInWithEmailPassword(state, password, components) {
         .then((userCredential) => {
             // Signed in
             let user = userCredential;
-            // console.log(user)
-
             //createUserData(user, state, components)
             // state.user.registered = true;
             state.user.id = user;
-            //state.user.isAuth = true;
+            state.user.isAuth = true;
             state.page = 'reading'
             stateChangeListener(user, state, components)
             //console.log(userCredential)
@@ -236,21 +176,14 @@ function signInWithEmailPassword(state, password, components) {
 function signUpWithEmailPassword(state, password, components) {
     const email = String (state.user.email);
     firebase.auth().createUserWithEmailAndPassword(email, String (password))
-        .then((userCredential) => {
-            createUserData(user, state, components)
+        .then((user) => {
+            //createUserData(user, state, components)
             // Signed in 
-            // state.user.registered = true;
             state.user.id = user;
-            //state.user.isAuth = true;
+            state.user.isAuth = true;
             state.page = 'reading'
-
-            //const user = userCredential
-            
-            // ...
         })
         .catch((error) => {
-            // const errorCode = error.code;
-            // const errorMessage = error.message;
             state.error = error;
             initialize(state, components)
             // ..
@@ -265,18 +198,6 @@ function sendEmailVerification() {
         // ...
         });
 }
-
-
-// dbRef.child("users").child(userId).get().then((snapshot) => {
-//     if (snapshot.exists()) {
-//       console.log(snapshot.val());
-//     } else {
-//       console.log("No data available");
-//     }
-//   }).catch((error) => {
-//     console.error(error);
-//   });
-  
 
 
 // const saveToLocal = (state) => {
