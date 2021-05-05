@@ -28,7 +28,7 @@ const formatDate = (date) => {
         '0' + d.getMinutes()
     ].map(component => component.slice(-2)); // взять последние 2 цифры из каждой компоненты
 
-    return d.slice(0, 3).join('.') + ' ' + d.slice(3).join(':');
+    return String (d.slice(0, 3).join('.') + ' ' + d.slice(3).join(':'));
 }
 
 export default formatDate
